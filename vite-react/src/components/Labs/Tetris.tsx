@@ -93,23 +93,25 @@ const Tetris = () => {
       });
     });
 
+    // 상태 업데이트 후 라인 클리어
     setBoard(newBoard);
+    clearLines(newBoard);  // 새로 업데이트된 보드 상태를 전달
     setCurrentPiece(generateNewPiece());
   }, [board, currentPiece, generateNewPiece]);
 
   // 행 제거 및 점수 계산
-  const clearLines = useCallback(() => {
-    const newBoard = board.filter(row => !row.every(cell => cell !== null));
-    const clearedLines = BOARD_HEIGHT - newBoard.length;
-    
+  const clearLines = useCallback((newBoard: (string | null)[][]) => {
+    const newFilteredBoard = newBoard.filter(row => !row.every(cell => cell !== null));
+    const clearedLines = BOARD_HEIGHT - newFilteredBoard.length;
+
     if (clearedLines > 0) {
       const newRows = Array(clearedLines)
         .fill(null)
         .map(() => Array(BOARD_WIDTH).fill(null));
-      setBoard([...newRows, ...newBoard]);
+      setBoard([...newRows, ...newFilteredBoard]);
       setScore(prev => prev + (clearedLines * 100));
     }
-  }, [board]);
+  }, []);
 
   // 키보드 입력 처리
   const handleKeyPress = useCallback((e: KeyboardEvent) => {
@@ -128,7 +130,6 @@ const Tetris = () => {
         setCurrentPiece(newPiece);
       } else if (dy > 0) {
         mergePieceToBoard();
-        clearLines();
       }
     };
 
@@ -155,8 +156,17 @@ const Tetris = () => {
           setCurrentPiece(rotatedPiece);
         }
         break;
+      case ' ':
+        // 스페이스바 눌렀을 때 즉시 떨어지게 처리
+        let newPiece = { ...currentPiece };
+        while (!checkCollision({ ...newPiece, position: { x: newPiece.position.x, y: newPiece.position.y + 1 } }, board)) {
+          newPiece.position.y += 1;
+        }
+        setCurrentPiece(newPiece);
+        mergePieceToBoard(); // 최종 위치에 병합
+        break;
     }
-  }, [currentPiece, board, gameOver, checkCollision, mergePieceToBoard, clearLines]);
+  }, [currentPiece, board, gameOver, checkCollision, mergePieceToBoard]);
 
   // 게임 루프
   useEffect(() => {
@@ -164,6 +174,8 @@ const Tetris = () => {
       setCurrentPiece(generateNewPiece());
     }
 
+    // 점수에 따라 게임 속도 조절
+    const gameSpeed = Math.max(1000 - Math.floor(score / 100) * 100, 200);  // 속도는 최소 200ms
     const gameLoop = setInterval(() => {
       if (currentPiece && !gameOver) {
         const newPiece = {
@@ -179,16 +191,15 @@ const Tetris = () => {
             setGameOver(true);
           } else {
             mergePieceToBoard();
-            clearLines();
           }
         } else {
           setCurrentPiece(newPiece);
         }
       }
-    }, 1000);
+    }, gameSpeed);
 
     return () => clearInterval(gameLoop);
-  }, [currentPiece, board, gameOver, checkCollision, mergePieceToBoard, clearLines, generateNewPiece]);
+  }, [currentPiece, board, gameOver, score, checkCollision, mergePieceToBoard, generateNewPiece]);
 
   // 키보드 이벤트 리스너
   useEffect(() => {
@@ -226,7 +237,7 @@ const Tetris = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 p-4 over-flow">
+    <div className="flex flex-col items-center justify-center bg-gray-900 p-4 h-full">
       <div className="mb-4 text-white text-2xl">Score: {score}</div>
       
       <div className="bg-gray-800 p-2 rounded-lg">
@@ -253,10 +264,6 @@ const Tetris = () => {
           </button>
         </div>
       )}
-      
-      <div className="mt-4 text-gray-400 text-sm">
-        Use arrow keys to move and rotate pieces
-      </div>
     </div>
   );
 };

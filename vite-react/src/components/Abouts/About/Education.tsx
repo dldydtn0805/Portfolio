@@ -1,16 +1,10 @@
 const Education = () => {
     return <div>
-        <h1 id="education-certificate">👔 Education & Certificate</h1>
-        <hr />
-        <h3 id="education">Education</h3>
+        <h1 id="education-certificate" className="text-center">EDUCATIONS</h1>
         <ul>
-        <li>경희대학교 미디어과</li>
-        <li>삼성 청년 소프트웨어 아카데미 [10기]</li>
-        </ul>
-        <h3 id="certificate">Certificate</h3>
-        <ul>
-        <li>SQLD</li>
-        <li>삼성 SW 역량 테스트 [A형]</li>
+            <li>경희대학교 미디어과</li>
+            <li>SSAFY</li>
+            <li>SQLD</li>
         </ul>
         <div>
         <a href="https://solved.ac/dldydtn0805/">
